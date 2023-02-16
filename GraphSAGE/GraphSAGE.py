@@ -1,7 +1,7 @@
 import torch
 import torch.nn as nn
 from torch.nn import init
-from torch.autograd import Variable
+import torch.nn.functional as F
 
 import numpy as np
 import time
@@ -56,7 +56,7 @@ class MeanAggregator(nn.Module):
         unique_nodes_list = list(set.union(*samp_neighs))
       #  print ("\n unl's size=",len(unique_nodes_list))
         unique_nodes = {n:i for i,n in enumerate(unique_nodes_list)}
-        mask = Variable(torch.zeros(len(samp_neighs), len(unique_nodes)))
+        mask = torch.zeros(len(samp_neighs), len(unique_nodes))
         column_indices = [unique_nodes[n] for samp_neigh in samp_neighs for n in samp_neigh]   
         row_indices = [i for i in range(len(samp_neighs)) for j in range(len(samp_neighs[i]))]
         mask[row_indices, column_indices] = 1
@@ -194,7 +194,7 @@ def run_cora():
         start_time = time.time()
         optimizer.zero_grad()
         loss = graphsage.loss(batch_nodes, 
-                Variable(torch.LongTensor(labels[np.array(batch_nodes)])))
+                torch.LongTensor(labels[np.array(batch_nodes)]))
         loss.backward()
         optimizer.step()
         end_time = time.time()
@@ -202,8 +202,8 @@ def run_cora():
         print (batch, loss.item())
 
     val_output = graphsage.forward(val) 
-    print ("Validation F1:", f1_score(labels[val], val_output.data.numpy().argmax(axis=1), average="micro"))
-    print ("Average batch time:", np.mean(times))
+    print("Validation F1:", f1_score(labels[val], val_output.data.numpy().argmax(axis=1), average="micro"))
+    print("Average batch time:", np.mean(times))
 
 if __name__ == "__main__":
     run_cora()
